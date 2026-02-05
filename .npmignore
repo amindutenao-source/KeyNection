@@ -1,0 +1,15 @@
+**/node_modules
+**/.vite
+**/dist
+**/build
+**/.cache
+**/.next
+**/out
+**/coverage
+**/.nyc_output
+**/test-results
+**/playwright-report
+**/*.log
+**/.env
+**/.env.*
+**/.DS_Store
