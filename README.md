@@ -1,6 +1,6 @@
 # KeyNection 🔑🏠
 
-[![CI](https://github.com/amindutenao-source/KeyNection/actions/workflows/ci.yml/badge.svg)](https://github.com/amindutenao-source/KeyNection/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/amindutenao-source/KeyNection/branch/main/graph/badge.svg)](https://codecov.io/gh/amindutenao-source/KeyNection) [![npm](https://img.shields.io/npm/v/keynection.svg)](https://www.npmjs.com/package/keynection)
+[![CI](https://github.com/amindutenao-source/KeyNection/actions/workflows/ci.yml/badge.svg)](https://github.com/amindutenao-source/KeyNection/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/amindutenao-source/KeyNection/branch/main/graph/badge.svg)](https://codecov.io/gh/amindutenao-source/KeyNection) [![npm](https://img.shields.io/npm/v/@amindutenao-source/keynection.svg)](https://www.npmjs.com/package/@amindutenao-source/keynection)
 
 **Unlock the value of unused spaces.**
 
@@ -137,6 +137,15 @@ Variables utiles :
 - `JWT_SECRET`
 - Swagger (API docs)
 - Tests : Jest
+
+---
+
+## 📦 Publication npm
+
+- Connexion npm : `npm login`
+- Publication (scope public) : `npm publish --access public`
+
+Le paquet est publié sous `@amindutenao-source/keynection`.
 
 ### Frontend
 - React 18 • TypeScript
