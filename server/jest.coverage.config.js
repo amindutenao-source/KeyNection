@@ -2,6 +2,7 @@ const baseConfig = require('./jest.config');
 
 module.exports = {
   ...baseConfig,
+  maxWorkers: 1,
   testPathIgnorePatterns: [
     '<rootDir>/src/__tests__/e2e/',
     '\\.e2e\\.test\\.ts$'

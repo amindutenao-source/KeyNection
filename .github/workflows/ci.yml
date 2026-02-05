@@ -86,4 +86,6 @@ jobs:
           JWT_SECRET: test-secret
           NODE_ENV: test
           DISABLE_EMAIL: true
+          E2E_DB_ATTEMPTS: 60
+          E2E_DB_DELAY_MS: 1000
         run: npm run test:e2e
