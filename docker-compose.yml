@@ -38,7 +38,7 @@ services:
     container_name: keynection-server
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/keynection?schema=public
+      DATABASE_URL: postgresql://keynection_user:keynection_password@postgres:5432/keynection?schema=public
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       SMTP_HOST: ${SMTP_HOST}
