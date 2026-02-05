@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express, { type RequestHandler } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -6,7 +9,6 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import dotenv from "dotenv";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
 import "./types/express";
@@ -37,8 +39,7 @@ import userRoutes from "./routes/users";
 import adminRoutes from "./routes/admin";
 import { healthHandler } from "./routes/health";
 
-// Load environment variables
-dotenv.config();
+// Environment variables loaded at top of file
 
 const app = express();
 const prisma = new PrismaClient();
