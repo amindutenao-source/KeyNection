@@ -5,15 +5,14 @@ import express, { type RequestHandler } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
-import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import path from "path";
-import { PrismaClient } from "@prisma/client";
 import "./types/express";
 import logger from "./utils/logger";
 import { metricsEndpoint, metricsMiddleware } from "./middleware/metrics";
+import prisma from "./lib/prisma";
 
 // Import middleware
 import { 
@@ -42,7 +41,6 @@ import { healthHandler } from "./routes/health";
 // Environment variables loaded at top of file
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 
 // Swagger configuration
@@ -152,14 +150,7 @@ app.use(cors({
 app.use(compression() as unknown as RequestHandler);
 
 // Logging middleware (skip in test to reduce noise)
-const shouldLogRequests = process.env.NODE_ENV !== "test";
-if (shouldLogRequests) {
-  if (process.env.NODE_ENV === "development") {
-    app.use(morgan("dev") as unknown as RequestHandler);
-  } else {
-    app.use(morgan("combined") as unknown as RequestHandler);
-  }
-
+if (process.env.NODE_ENV !== "test") {
   app.use(requestLogger as unknown as RequestHandler);
 }
 

@@ -1,8 +1,7 @@
-import { Prisma, PrismaClient, UserRole } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 import { asyncHandler } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../types';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 const parseBoolean = (value: unknown): boolean => {
   if (typeof value === 'boolean') return value;

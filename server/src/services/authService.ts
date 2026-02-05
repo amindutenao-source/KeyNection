@@ -1,7 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { PrismaClient } from '@prisma/client';
 import { 
   User, 
   CreateUserRequest, 
@@ -18,8 +17,8 @@ import {
   NotFoundError 
 } from '../middleware/errorHandler';
 import { EmailService } from './emailService';
+import prisma from '../lib/prisma';
 
-const prisma = new PrismaClient();
 const emailService = new EmailService();
 
 export class AuthService {

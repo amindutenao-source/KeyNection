@@ -129,6 +129,7 @@ KeyNection ne possède ni ne gère les biens. Elle crée le cadre, la transparen
   `npm test`
 - Tests e2e (Postgres requis) :
   `./scripts/run-e2e-local.sh`
+  ou reset complet `./scripts/run-e2e-reset.sh`
   ou `DATABASE_URL=postgresql://postgres:password@localhost:5433/keynection?schema=public npm run test:e2e`
 - Pipeline CI local (lint + coverage + client) :
   `npm run test:ci`
@@ -159,6 +160,12 @@ Le paquet est publié sous `@amindutenao-source/keynection`.
 ### Infrastructure
 - Docker & Docker Compose
 - PostgreSQL
+
+## 📊 Observabilité
+
+- Logs structurés via Winston.
+- Metrics Prometheus: activer `METRICS_ENABLED=true` et définir `METRICS_TOKEN` si besoin.
+- Endpoint metrics: `GET /metrics` (protégé si `METRICS_TOKEN` est défini).
 - Redis
 - Nginx (reverse proxy en production)
 

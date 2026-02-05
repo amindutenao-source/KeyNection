@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { PropertyController } from '../controllers/propertyController';
 
-jest.mock('@prisma/client', () => {
+jest.mock('../lib/prisma', () => {
   const mockPrisma = {
     property: {
       findMany: jest.fn(),
@@ -10,13 +10,12 @@ jest.mock('@prisma/client', () => {
   };
 
   return {
-    PrismaClient: jest.fn(() => mockPrisma),
-    Prisma: {},
-    __mock: mockPrisma
+    __esModule: true,
+    default: mockPrisma
   };
 });
 
-const prismaMock = (jest.requireMock('@prisma/client') as { __mock: any }).__mock;
+const prismaMock = (jest.requireMock('../lib/prisma') as { default: any }).default;
 
 const createRes = () => {
   const res = {

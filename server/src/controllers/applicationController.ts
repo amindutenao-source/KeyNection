@@ -1,9 +1,8 @@
 import { Response } from 'express';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { asyncHandler } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../types';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 const parseNumber = (value: unknown): number | undefined => {
   if (value === undefined || value === null || value === '') return undefined;

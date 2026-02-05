@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { AuthenticatedRequest, JWTPayload, UserRole, UserStatus } from '../types';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 export interface AuthOptions {
   required?: boolean;

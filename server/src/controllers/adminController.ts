@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import { asyncHandler } from '../middleware/errorHandler';
 import { AuthenticatedRequest } from '../types';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 const buildActivity = (
   items: Array<{ id: string; createdAt: Date; message: string; status: 'pending' | 'completed' }>

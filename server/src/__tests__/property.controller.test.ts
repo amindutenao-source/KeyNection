@@ -2,7 +2,7 @@ import type { AuthenticatedRequest } from '../types';
 import type { Response } from 'express';
 import { PropertyController } from '../controllers/propertyController';
 
-jest.mock('@prisma/client', () => {
+jest.mock('../lib/prisma', () => {
   const mockPrisma = {
     property: {
       create: jest.fn(),
@@ -13,9 +13,8 @@ jest.mock('@prisma/client', () => {
   };
 
   return {
-    PrismaClient: jest.fn(() => mockPrisma),
-    Prisma: {},
-    __mock: mockPrisma
+    __esModule: true,
+    default: mockPrisma
   };
 });
 
@@ -31,7 +30,7 @@ jest.mock('../middleware/upload', () => {
   };
 });
 
-const prismaMock = (jest.requireMock('@prisma/client') as { __mock: any }).__mock;
+const prismaMock = (jest.requireMock('../lib/prisma') as { default: any }).default;
 const uploadMock = (jest.requireMock('../middleware/upload') as { __mock: any }).__mock;
 const getFileUrlMock = uploadMock.getFileUrl as jest.Mock;
 const deleteFileMock = uploadMock.deleteFile as jest.Mock;

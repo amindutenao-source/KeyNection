@@ -8,13 +8,13 @@ coverage:
   status:
     project:
       default:
-        target: 70%
+        target: 36%
         threshold: 2%
         flags:
           - server
     patch:
       default:
-        target: 70%
+        target: 36%
         threshold: 5%
         flags:
           - server

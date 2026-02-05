@@ -1,4 +1,4 @@
-jest.mock('@prisma/client', () => {
+jest.mock('../lib/prisma', () => {
   const mockPrisma = {
     user: {
       findUnique: jest.fn(),
@@ -7,20 +7,8 @@ jest.mock('@prisma/client', () => {
   };
 
   return {
-    PrismaClient: jest.fn(() => mockPrisma),
-    Prisma: {},
-    UserRole: {
-      OWNER: 'OWNER',
-      MANAGER: 'MANAGER',
-      ADMIN: 'ADMIN'
-    },
-    UserStatus: {
-      PENDING: 'PENDING',
-      ACTIVE: 'ACTIVE',
-      INACTIVE: 'INACTIVE',
-      SUSPENDED: 'SUSPENDED'
-    },
-    __mock: mockPrisma
+    __esModule: true,
+    default: mockPrisma
   };
 });
 
@@ -35,15 +23,14 @@ jest.mock('../services/emailService', () => {
   };
 });
 
-let prismaMock: any;
 let emailMock: any;
+const prismaMock = (jest.requireMock('../lib/prisma') as { default: any }).default;
 
 describe('AuthService.register', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.JWT_SECRET = 'test-secret';
     process.env.FRONTEND_URL = 'http://localhost:3000';
-    prismaMock = (jest.requireMock('@prisma/client') as { __mock: any }).__mock;
     emailMock = (jest.requireMock('../services/emailService') as { __mock: any }).__mock;
   });
 

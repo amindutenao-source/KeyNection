@@ -2,7 +2,7 @@ import type { AuthenticatedRequest } from '../types';
 import type { Response } from 'express';
 import { MaintenanceController } from '../controllers/maintenanceController';
 
-jest.mock('@prisma/client', () => {
+jest.mock('../lib/prisma', () => {
   const mockPrisma = {
     maintenanceRequest: {
       findMany: jest.fn(),
@@ -21,18 +21,12 @@ jest.mock('@prisma/client', () => {
   };
 
   return {
-    PrismaClient: jest.fn(() => mockPrisma),
-    Prisma: {},
-    UserRole: {
-      OWNER: 'OWNER',
-      MANAGER: 'MANAGER',
-      ADMIN: 'ADMIN'
-    },
-    __mock: mockPrisma
+    __esModule: true,
+    default: mockPrisma
   };
 });
 
-const prismaMock = (jest.requireMock('@prisma/client') as { __mock: any }).__mock;
+const prismaMock = (jest.requireMock('../lib/prisma') as { default: any }).default;
 
 const createRes = () => {
   const res = {
