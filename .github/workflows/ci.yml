@@ -48,6 +48,7 @@ jobs:
         with:
           files: ./server/coverage/lcov.info
           flags: server
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
   e2e:

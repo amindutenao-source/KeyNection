@@ -1,9 +1,9 @@
 {
-  "name": "keynection",
+  "name": "@amindutenao-source/keynection",
   "version": "1.0.0",
   "description": "A web app connecting inactive property owners with property managers",
   "main": "index.js",
-  "private": true,
+  "private": false,
   "workspaces": [
     "client",
     "server"
@@ -59,6 +59,20 @@
   ],
   "author": "KeyNection Team",
   "license": "MIT",
+  "files": [
+    "client",
+    "server",
+    "README.md",
+    "QUICKSTART.md",
+    "MOBILE_README.md",
+    "LICENSE",
+    "docker-compose.yml",
+    "install.sh",
+    "dashboard.html"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "concurrently": "^8.2.2"
   },

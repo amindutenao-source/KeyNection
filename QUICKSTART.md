@@ -11,8 +11,8 @@
 
 ### 1. Cloner le projet
 ```bash
-git clone <votre-repo-url>
-cd keynection
+git clone https://github.com/amindutenao-source/KeyNection.git
+cd KeyNection
 ```
 
 ### 2. Installation automatique
