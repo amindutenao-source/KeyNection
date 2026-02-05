@@ -135,6 +135,8 @@ export class AdminController {
    */
   static getAudits = asyncHandler(async (req: AuthenticatedRequest, res) => {
     const limit = Math.min(parseInt((req.query.limit as string) || '20', 10), 100);
+    const typeFilter = (req.query.type as string | undefined)?.toUpperCase() || '';
+    const search = (req.query.search as string | undefined)?.toLowerCase() || '';
 
     const [
       payments,
@@ -182,7 +184,7 @@ export class AdminController {
       })
     ]);
 
-    const audits = [
+    let audits = [
       ...payments.map((payment) => ({
         id: payment.id,
         type: 'PAYMENT',
@@ -225,7 +227,21 @@ export class AdminController {
         message: `Nouvel utilisateur: ${user.firstName} ${user.lastName}`,
         createdAt: user.createdAt
       }))
-    ]
+    ];
+
+    if (typeFilter) {
+      audits = audits.filter((entry) => entry.type === typeFilter);
+    }
+
+    if (search) {
+      audits = audits.filter((entry) => {
+        const message = entry.message.toLowerCase();
+        const type = entry.type.toLowerCase();
+        return message.includes(search) || type.includes(search);
+      });
+    }
+
+    const response = audits
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit)
       .map((entry) => ({
@@ -237,7 +253,7 @@ export class AdminController {
 
     return res.json({
       success: true,
-      data: audits
+      data: response
     });
   });
 }

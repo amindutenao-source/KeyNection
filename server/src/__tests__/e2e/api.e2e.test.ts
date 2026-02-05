@@ -205,7 +205,7 @@ describeE2E('E2E API with real DB', () => {
     expect(response.body.data.propertyId).toBe(propertyId);
   });
 
-  itIfDb('manager can create payment, review, and document', async () => {
+  itIfDb('manager can create payment and document', async () => {
     const payment = await request(app)
       .post('/api/payments')
       .set('Authorization', `Bearer ${managerToken}`)
@@ -217,18 +217,6 @@ describeE2E('E2E API with real DB', () => {
       });
 
     expect(payment.status).toBe(201);
-
-    const review = await request(app)
-      .post('/api/reviews')
-      .set('Authorization', `Bearer ${managerToken}`)
-      .send({
-        propertyId,
-        rating: 5,
-        title: 'Great property',
-        comment: 'Smooth experience'
-      });
-
-    expect(review.status).toBe(201);
 
     const document = await request(app)
       .post('/api/documents')
@@ -242,5 +230,162 @@ describeE2E('E2E API with real DB', () => {
       });
 
     expect(document.status).toBe(201);
+  });
+
+  itIfDb('admin can update user status', async () => {
+    const targetUser = await prisma.user.create({
+      data: {
+        email: `suspend_${Math.random().toString(36).slice(2)}@example.com`,
+        password: 'hashed-password',
+        firstName: 'Target',
+        lastName: 'User',
+        role: 'OWNER',
+        status: 'ACTIVE',
+        emailVerified: true,
+        phoneVerified: true
+      }
+    });
+
+    const update = await request(app)
+      .put(`/api/users/${targetUser.id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'SUSPENDED' });
+
+    expect(update.status).toBe(200);
+    expect(update.body.data.status).toBe('SUSPENDED');
+
+    const detail = await request(app)
+      .get(`/api/users/${targetUser.id}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(detail.status).toBe(200);
+    expect(detail.body.data.status).toBe('SUSPENDED');
+  });
+
+  itIfDb('payment lifecycle: update status and fetch', async () => {
+    const created = await request(app)
+      .post('/api/payments')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({
+        contractId,
+        amount: 900,
+        method: 'CASH',
+        description: 'Second payment'
+      });
+
+    expect(created.status).toBe(201);
+    const paymentId = created.body.data.id;
+
+    const updated = await request(app)
+      .put(`/api/payments/${paymentId}`)
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ status: 'COMPLETED' });
+
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.status).toBe('COMPLETED');
+
+    const fetched = await request(app)
+      .get(`/api/payments/${paymentId}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    expect(fetched.status).toBe(200);
+    expect(fetched.body.data.id).toBe(paymentId);
+  });
+
+  itIfDb('maintenance lifecycle: update and delete', async () => {
+    const created = await request(app)
+      .post('/api/maintenance')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        propertyId,
+        title: 'Broken window',
+        description: 'Living room window cracked',
+        priority: 'MEDIUM'
+      });
+
+    expect(created.status).toBe(201);
+    const requestId = created.body.data.id;
+
+    const updated = await request(app)
+      .put(`/api/maintenance/${requestId}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ status: 'IN_PROGRESS' });
+
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.status).toBe('IN_PROGRESS');
+
+    const deleted = await request(app)
+      .delete(`/api/maintenance/${requestId}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(deleted.status).toBe(200);
+  });
+
+  itIfDb('document lifecycle: create and delete', async () => {
+    const created = await request(app)
+      .post('/api/documents')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({
+        name: 'Admin doc',
+        type: 'CONTRACT',
+        url: 'https://example.com/admin-doc.pdf'
+      });
+
+    expect(created.status).toBe(201);
+    const docId = created.body.data.id;
+
+    const deleted = await request(app)
+      .delete(`/api/documents/${docId}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    expect(deleted.status).toBe(200);
+  });
+
+  itIfDb('review lifecycle: create, update, delete', async () => {
+    const reviewProperty = await prisma.property.create({
+      data: {
+        title: 'Review Property',
+        description: 'Property for review lifecycle',
+        type: 'HOUSE',
+        status: 'AVAILABLE',
+        address: '789 Review St',
+        city: 'Testville',
+        state: 'TS',
+        zipCode: '12345',
+        country: 'USA',
+        features: [],
+        amenities: [],
+        images: [],
+        listedAt: new Date(),
+        ownerId
+      }
+    });
+
+    const created = await request(app)
+      .post('/api/reviews')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({
+        propertyId: reviewProperty.id,
+        rating: 4,
+        title: 'Bonne expérience',
+        comment: 'RAS'
+      });
+
+    expect(created.status).toBe(201);
+    const reviewId = created.body.data.id;
+
+    const updated = await request(app)
+      .put(`/api/reviews/${reviewId}`)
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ rating: 5, comment: 'Super' });
+
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.rating).toBe(5);
+
+    const deleted = await request(app)
+      .delete(`/api/reviews/${reviewId}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    expect(deleted.status).toBe(200);
   });
 });
