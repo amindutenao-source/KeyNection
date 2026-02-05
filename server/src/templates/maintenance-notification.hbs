@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demande de maintenance</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #111827; background-color: #f8fafc; padding: 24px;">
+  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 32px; border-radius: 8px;">
+    <h2 style="color: #1e40af; margin-top: 0;">Nouvelle demande de maintenance</h2>
+    <p>Une nouvelle demande de maintenance a été créée pour :</p>
+    <p style="font-weight: 600;">{{propertyTitle}}</p>
+    <p><strong>Titre :</strong> {{requestTitle}}</p>
+    <p><strong>Priorité :</strong> {{priority}}</p>
+    <p style="text-align: center; margin: 24px 0;">
+      <a href="{{dashboardUrl}}" style="background: #1e40af; color: #ffffff; padding: 12px 20px; border-radius: 6px; text-decoration: none;">
+        Voir la demande
+      </a>
+    </p>
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+    <p style="font-size: 13px; color: #6b7280;">Besoin d'aide ? Contactez-nous à {{supportEmail}}.</p>
+  </div>
+</body>
+</html>

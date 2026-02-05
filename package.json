@@ -1,0 +1,77 @@
+{
+  "name": "keynection",
+  "version": "1.0.0",
+  "description": "A web app connecting inactive property owners with property managers",
+  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "cd server && npm test",
+    "test:client": "cd client && npm test",
+    "test:server:coverage": "cd server && npm run test:coverage",
+    "test:ci": "npm run lint && npm run test:server:coverage && npm run test:client",
+    "test:e2e": "cd server && npm run test:e2e",
+    "test:watch": "npm run test:server:watch",
+    "test:server:watch": "cd server && npm run test:watch",
+    "lint": "npm run lint:server && npm run lint:client",
+    "lint:server": "cd server && npm run lint",
+    "lint:client": "cd client && npm run lint",
+    "lint:fix": "npm run lint:fix:server && npm run lint:fix:client",
+    "lint:fix:server": "cd server && npm run lint:fix",
+    "lint:fix:client": "cd client && npm run lint:fix",
+    "format": "npm run format:server && npm run format:client",
+    "format:server": "cd server && npm run format",
+    "format:client": "cd client && npm run format",
+    "db:setup": "cd server && npm run db:setup",
+    "db:migrate": "cd server && npm run db:migrate",
+    "db:seed": "cd server && npm run db:seed",
+    "db:reset": "cd server && npm run db:reset",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "clean": "npm run clean:server && npm run clean:client",
+    "clean:server": "cd server && npm run clean",
+    "clean:client": "cd client && npm run clean",
+    "setup": "chmod +x install.sh && ./install.sh"
+  },
+  "keywords": [
+    "property-management",
+    "real-estate",
+    "nodejs",
+    "express",
+    "react",
+    "typescript",
+    "prisma",
+    "postgresql"
+  ],
+  "author": "KeyNection Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amindutenao-source/KeyNection.git"
+  },
+  "bugs": {
+    "url": "https://github.com/amindutenao-source/KeyNection/issues"
+  },
+  "homepage": "https://github.com/amindutenao-source/KeyNection#readme"
+} 

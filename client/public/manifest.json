@@ -1,0 +1,32 @@
+{
+  "short_name": "KeyNection",
+  "name": "KeyNection - Unlock the value of unused spaces",
+  "description": "Connectez les propriétaires inactifs avec des gestionnaires de propriétés. Libérez la valeur de vos espaces inutilisés.",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1e40af",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "categories": ["business", "finance", "lifestyle"],
+  "lang": "fr",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false
+} 

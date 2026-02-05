@@ -1,0 +1,440 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  CONDO
+  TOWNHOUSE
+  VILLA
+  COMMERCIAL
+  LAND
+  OTHER
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+  SOLD
+  PENDING
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+  UNDER_REVIEW
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  TERMINATED
+  PENDING_SIGNATURE
+}
+
+enum NotificationType {
+  APPLICATION_RECEIVED
+  APPLICATION_APPROVED
+  APPLICATION_REJECTED
+  CONTRACT_SENT
+  CONTRACT_SIGNED
+  PAYMENT_RECEIVED
+  MAINTENANCE_REQUEST
+  GENERAL
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  BANK_TRANSFER
+  PAYPAL
+  STRIPE
+  CASH
+}
+
+model User {
+  id                String       @id @default(cuid())
+  email             String       @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  avatar            String?
+  role              UserRole     @default(OWNER)
+  status            UserStatus   @default(PENDING)
+  emailVerified     Boolean      @default(false)
+  phoneVerified     Boolean      @default(false)
+  verificationToken String?
+  resetPasswordToken String?
+  resetPasswordExpires DateTime?
+  lastLoginAt       DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Profile fields
+  bio               String?
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  country           String?
+  dateOfBirth       DateTime?
+  identificationNumber String?
+  taxId             String?
+  bankAccount       String?
+  emergencyContact  String?
+  emergencyPhone    String?
+
+  // Relationships
+  ownedProperties   Property[]   @relation("PropertyOwner")
+  managedProperties Property[]   @relation("PropertyManager")
+  applications      Application[]
+  ownedContracts    Contract[]   @relation("ContractOwner")
+  managedContracts  Contract[]   @relation("ContractManager")
+  tenantContracts   Contract[]   @relation("ContractTenant")
+  notifications     Notification[]
+  payments          Payment[]
+  sentMessages      Message[]    @relation("MessageSender")
+  receivedMessages  Message[]    @relation("MessageRecipient")
+  reviews           Review[]
+  documents         Document[]
+
+  @@map("users")
+}
+
+model Property {
+  id                String         @id @default(cuid())
+  title             String
+  description       String
+  type              PropertyType
+  status            PropertyStatus @default(AVAILABLE)
+  address           String
+  city              String
+  state             String
+  zipCode           String
+  country           String
+  latitude          Float?
+  longitude         Float?
+  
+  // Property details
+  bedrooms          Int?
+  bathrooms         Int?
+  squareFeet        Float?
+  yearBuilt         Int?
+  parkingSpaces     Int?
+  furnished         Boolean        @default(false)
+  petsAllowed       Boolean        @default(false)
+  smokingAllowed    Boolean        @default(false)
+  
+  // Financial details
+  monthlyRent       Float?
+  securityDeposit   Float?
+  utilitiesIncluded Boolean        @default(false)
+  propertyTax       Float?
+  insurance         Float?
+  
+  // Features
+  features          String[]       // Array of features
+  amenities         String[]       // Array of amenities
+  
+  // Images
+  images            String[]       // Array of image URLs
+  
+  // Owner and Manager
+  ownerId           String
+  owner             User           @relation("PropertyOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  managerId         String?
+  manager           User?          @relation("PropertyManager", fields: [managerId], references: [id])
+  
+  // Timestamps
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  listedAt          DateTime?
+  lastMaintenance   DateTime?
+  
+  // Relationships
+  applications      Application[]
+  contracts         Contract[]
+  maintenanceRequests MaintenanceRequest[]
+  documents         Document[]
+  reviews           Review[]
+  
+  @@map("properties")
+}
+
+model Application {
+  id                String            @id @default(cuid())
+  propertyId        String
+  property          Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  applicantId       String
+  applicant         User              @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  status            ApplicationStatus @default(PENDING)
+  
+  // Application details
+  moveInDate        DateTime?
+  leaseTerm         Int?              // in months
+  monthlyIncome     Float?
+  employmentStatus  String?
+  employerName      String?
+  employerPhone     String?
+  currentAddress    String?
+  currentLandlord   String?
+  currentLandlordPhone String?
+  reasonForMoving   String?
+  additionalInfo    String?
+  
+  // Financial information
+  creditScore       Int?
+  annualIncome      Float?
+  bankReferences    String?
+  
+  // References
+  personalReferences String[]         // Array of reference names
+  personalReferencePhones String[]    // Array of reference phones
+  
+  // Documents
+  documents         String[]          // Array of document URLs
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  reviewedAt        DateTime?
+  reviewedBy        String?
+  
+  // Relationships
+  contracts         Contract[]
+  
+  @@map("applications")
+}
+
+model Contract {
+  id                String        @id @default(cuid())
+  propertyId        String
+  property          Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  applicationId     String?
+  application       Application?  @relation(fields: [applicationId], references: [id])
+  ownerId           String
+  owner             User          @relation("ContractOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  managerId         String?
+  manager           User?         @relation("ContractManager", fields: [managerId], references: [id])
+  tenantId          String?
+  tenant            User?         @relation("ContractTenant", fields: [tenantId], references: [id])
+  
+  status            ContractStatus @default(DRAFT)
+  
+  // Contract terms
+  startDate         DateTime?
+  endDate           DateTime?
+  monthlyRent       Float?
+  securityDeposit   Float?
+  utilitiesIncluded Boolean       @default(false)
+  lateFee           Float?
+  gracePeriod       Int?          // in days
+  
+  // Contract details
+  contractType      String?       // "RENTAL", "MANAGEMENT", etc.
+  terms             String?       // Contract terms and conditions
+  specialConditions String?
+  
+  // Signatures
+  ownerSignedAt     DateTime?
+  managerSignedAt   DateTime?
+  tenantSignedAt    DateTime?
+  
+  // Documents
+  contractDocument  String?       // URL to signed contract PDF
+  
+  // Timestamps
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relationships
+  payments          Payment[]
+  maintenanceRequests MaintenanceRequest[]
+  
+  @@map("contracts")
+}
+
+model Notification {
+  id                String            @id @default(cuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              NotificationType
+  status            NotificationStatus @default(UNREAD)
+  
+  title             String
+  message           String
+  data              Json?             // Additional data as JSON
+  
+  // Related entities
+  propertyId        String?
+  applicationId     String?
+  contractId        String?
+  paymentId         String?
+  
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  readAt            DateTime?
+  
+  @@map("notifications")
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  contractId        String?
+  contract          Contract?     @relation(fields: [contractId], references: [id])
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount            Float
+  currency          String        @default("USD")
+  status            PaymentStatus @default(PENDING)
+  method            PaymentMethod
+  description       String?
+  
+  // Payment details
+  transactionId     String?       // External payment processor ID
+  receiptUrl        String?
+  failureReason     String?
+  
+  // Timestamps
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  processedAt       DateTime?
+  
+  @@map("payments")
+}
+
+model MaintenanceRequest {
+  id                String    @id @default(cuid())
+  propertyId        String
+  property          Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  contractId        String?
+  contract          Contract? @relation(fields: [contractId], references: [id])
+  
+  title             String
+  description       String
+  priority          String    // "LOW", "MEDIUM", "HIGH", "URGENT"
+  status            String    // "PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"
+  
+  // Request details
+  category          String?   // "PLUMBING", "ELECTRICAL", "HVAC", etc.
+  estimatedCost     Float?
+  actualCost        Float?
+  scheduledDate     DateTime?
+  completedDate     DateTime?
+  
+  // Images
+  images            String[]  // Array of image URLs
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@map("maintenance_requests")
+}
+
+model Document {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId        String?
+  property          Property? @relation(fields: [propertyId], references: [id])
+  
+  name              String
+  type              String    // "CONTRACT", "ID", "PROOF_OF_INCOME", etc.
+  url               String
+  size              Int?      // File size in bytes
+  mimeType          String?
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  
+  @@map("documents")
+}
+
+model Message {
+  id                String    @id @default(cuid())
+  senderId          String
+  sender            User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId       String
+  recipient         User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  subject           String?
+  content           String
+  read              Boolean   @default(false)
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  readAt            DateTime?
+  
+  @@map("messages")
+}
+
+model Review {
+  id                String    @id @default(cuid())
+  propertyId        String
+  property          Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  rating            Int       // 1-5 stars
+  title             String?
+  comment           String?
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([propertyId, userId])
+  @@map("reviews")
+}
+
+model Session {
+  id                String    @id @default(cuid())
+  userId            String
+  token             String    @unique
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
+  
+  @@map("sessions")
+} 
