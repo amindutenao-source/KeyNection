@@ -243,6 +243,31 @@ export const contractSchemas = {
   })
 };
 
+// Notification validation schemas
+export const notificationSchemas = {
+  create: Joi.object({
+    userId: Joi.string().min(1).required(),
+    type: Joi.string().valid(
+      'APPLICATION_RECEIVED',
+      'APPLICATION_APPROVED',
+      'APPLICATION_REJECTED',
+      'CONTRACT_SENT',
+      'CONTRACT_SIGNED',
+      'PAYMENT_RECEIVED',
+      'MAINTENANCE_REQUEST',
+      'GENERAL'
+    ).required(),
+    status: Joi.string().valid('UNREAD', 'READ', 'ARCHIVED').optional(),
+    title: Joi.string().min(2).max(200).required(),
+    message: Joi.string().min(2).max(2000).required(),
+    data: Joi.any().optional(),
+    propertyId: Joi.string().min(1).optional(),
+    applicationId: Joi.string().min(1).optional(),
+    contractId: Joi.string().min(1).optional(),
+    paymentId: Joi.string().min(1).optional()
+  })
+};
+
 // Payment validation schemas
 export const paymentSchemas = {
   create: Joi.object({
@@ -438,6 +463,10 @@ export const validateApplication = {
 export const validateContract = {
   create: validate(contractSchemas.create),
   update: validate(contractSchemas.update)
+};
+
+export const validateNotification = {
+  create: validate(notificationSchemas.create)
 };
 
 export const validatePayment = {

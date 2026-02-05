@@ -148,4 +148,23 @@ describe('Auth middleware', () => {
 
     expect(next).toHaveBeenCalled();
   });
+
+  it('allows admin regardless of role restriction', async () => {
+    const token = jwt.sign({ userId: 'admin-1' }, process.env.JWT_SECRET as string);
+    const req = {
+      headers: { authorization: `Bearer ${token}` }
+    } as AuthenticatedRequest;
+    const res = createRes();
+    const next = jest.fn() as NextFunction;
+
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: 'admin-1',
+      role: 'ADMIN',
+      status: 'ACTIVE'
+    });
+
+    await requireRole(['OWNER'])(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+  });
 });

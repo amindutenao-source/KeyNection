@@ -84,8 +84,10 @@ export const authenticate = (options: AuthOptions = {}) => {
         });
       }
 
-      // Check role permissions
-      if (options.roles && !options.roles.includes(user.role)) {
+      const isAdmin = user.role === UserRole.ADMIN;
+
+      // Check role permissions (admins bypass role checks)
+      if (options.roles && !options.roles.includes(user.role) && !isAdmin) {
         return res.status(403).json({
           success: false,
           message: 'Insufficient permissions',
