@@ -1,6 +1,6 @@
 # KeyNection 🔑🏠
 
-[![CI](https://github.com/amindutenao-source/KeyNection/actions/workflows/ci.yml/badge.svg)](https://github.com/amindutenao-source/KeyNection/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/amindutenao-source/KeyNection/branch/main/graph/badge.svg)](https://codecov.io/gh/amindutenao-source/KeyNection)
+[![CI](https://github.com/amindutenao-source/KeyNection/actions/workflows/ci.yml/badge.svg)](https://github.com/amindutenao-source/KeyNection/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/amindutenao-source/KeyNection/branch/main/graph/badge.svg)](https://codecov.io/gh/amindutenao-source/KeyNection) [![npm](https://img.shields.io/npm/v/keynection.svg)](https://www.npmjs.com/package/keynection)
 
 **Unlock the value of unused spaces.**
 

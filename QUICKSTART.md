@@ -1,4 +1,5 @@
 # 🚀 Guide de Démarrage Rapide - Keynection
+[![CI](https://github.com/amindutenao-source/KeyNection/actions/workflows/ci.yml/badge.svg)](https://github.com/amindutenao-source/KeyNection/actions/workflows/ci.yml)
 
 ## Prérequis
 
