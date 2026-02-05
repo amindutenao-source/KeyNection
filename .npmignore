@@ -9,6 +9,11 @@
 **/.nyc_output
 **/test-results
 **/playwright-report
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
 **/*.log
 **/.env
 **/.env.*
