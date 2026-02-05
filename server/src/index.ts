@@ -11,7 +11,7 @@ import swaggerUi from "swagger-ui-express";
 import path from "path";
 import "./types/express";
 import logger from "./utils/logger";
-import { metricsEndpoint, metricsMiddleware } from "./middleware/metrics";
+import { initMetrics, metricsEndpoint, metricsMiddleware } from "./middleware/metrics";
 import prisma from "./lib/prisma";
 
 // Import middleware
@@ -157,6 +157,13 @@ if (process.env.NODE_ENV !== "test") {
 // Metrics (optional)
 const metricsEnabled = process.env.METRICS_ENABLED === "true";
 if (metricsEnabled) {
+  initMetrics();
+  if (!process.env.METRICS_TOKEN) {
+    logger.warn(
+      "Metrics enabled without METRICS_TOKEN. The /metrics endpoint is unprotected.",
+      { service: "keynection-api" }
+    );
+  }
   app.use(metricsMiddleware);
   app.get("/metrics", metricsEndpoint);
 }

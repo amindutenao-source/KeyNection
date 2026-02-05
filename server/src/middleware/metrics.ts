@@ -2,7 +2,15 @@ import type { Request, Response, NextFunction } from 'express';
 import client from 'prom-client';
 
 const register = new client.Registry();
-client.collectDefaultMetrics({ register });
+let defaultMetricsStarted = false;
+
+export const initMetrics = () => {
+  if (defaultMetricsStarted) {
+    return;
+  }
+  client.collectDefaultMetrics({ register });
+  defaultMetricsStarted = true;
+};
 
 const httpRequestDurationSeconds = new client.Histogram({
   name: 'http_request_duration_seconds',
