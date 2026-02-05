@@ -128,12 +128,13 @@ KeyNection ne possède ni ne gère les biens. Elle crée le cadre, la transparen
 - Tests unitaires (server) + UI (client) :
   `npm test`
 - Tests e2e (Postgres requis) :
-  `npm run test:e2e`
+  `./scripts/run-e2e-local.sh`
+  ou `DATABASE_URL=postgresql://postgres:password@localhost:5433/keynection?schema=public npm run test:e2e`
 - Pipeline CI local (lint + coverage + client) :
   `npm run test:ci`
 
 Variables utiles :
-- `DATABASE_URL` (ex. `postgresql://postgres:password@localhost:5432/keynection?schema=public`)
+- `DATABASE_URL` (ex. `postgresql://postgres:password@localhost:5433/keynection?schema=public`)
 - `JWT_SECRET`
 - Swagger (API docs)
 - Tests : Jest

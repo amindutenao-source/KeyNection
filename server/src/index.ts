@@ -151,14 +151,17 @@ app.use(cors({
 // Compression middleware
 app.use(compression() as unknown as RequestHandler);
 
-// Logging middleware
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev") as unknown as RequestHandler);
-} else {
-  app.use(morgan("combined") as unknown as RequestHandler);
-}
+// Logging middleware (skip in test to reduce noise)
+const shouldLogRequests = process.env.NODE_ENV !== "test";
+if (shouldLogRequests) {
+  if (process.env.NODE_ENV === "development") {
+    app.use(morgan("dev") as unknown as RequestHandler);
+  } else {
+    app.use(morgan("combined") as unknown as RequestHandler);
+  }
 
-app.use(requestLogger as unknown as RequestHandler);
+  app.use(requestLogger as unknown as RequestHandler);
+}
 
 // Metrics (optional)
 const metricsEnabled = process.env.METRICS_ENABLED === "true";
