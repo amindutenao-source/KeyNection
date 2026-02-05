@@ -1,15 +1,35 @@
 import path from 'path';
+import fs from 'fs';
 import { execSync } from 'child_process';
 import { Client } from 'pg';
 import dotenv from 'dotenv';
 
-dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '.env') });
+const loadEnv = () => {
+  const rootEnv = path.resolve(__dirname, '..', '..', '..', '.env');
+  const serverEnv = path.resolve(__dirname, '..', '..', '..', 'server', '.env');
 
-const BASE_DATABASE_URL = process.env.DATABASE_URL;
+  if (fs.existsSync(rootEnv)) {
+    dotenv.config({ path: rootEnv });
+  }
 
-if (!BASE_DATABASE_URL) {
-  throw new Error('DATABASE_URL must be set for e2e tests');
-}
+  if (!process.env.DATABASE_URL && fs.existsSync(serverEnv)) {
+    dotenv.config({ path: serverEnv });
+  }
+};
+
+const getBaseDatabaseUrl = () => {
+  if (!process.env.DATABASE_URL && !process.env.E2E_DATABASE_URL) {
+    loadEnv();
+  }
+
+  const resolvedUrl = process.env.E2E_DATABASE_URL || process.env.DATABASE_URL;
+
+  if (!resolvedUrl) {
+    throw new Error('DATABASE_URL must be set for e2e tests');
+  }
+
+  return resolvedUrl;
+};
 
 export const buildSchemaName = (suffix: string) => {
   const worker = process.env.JEST_WORKER_ID || '1';
@@ -28,10 +48,10 @@ const withoutSchema = (url: string) => {
   return parsed.toString();
 };
 
-export const createTestDatabaseUrl = (schema: string) => withSchema(BASE_DATABASE_URL, schema);
+export const createTestDatabaseUrl = (schema: string) => withSchema(getBaseDatabaseUrl(), schema);
 
 export const ensureSchema = async (schema: string) => {
-  const client = new Client({ connectionString: withoutSchema(BASE_DATABASE_URL) });
+  const client = new Client({ connectionString: withoutSchema(getBaseDatabaseUrl()) });
   await client.connect();
   await client.query(`CREATE SCHEMA IF NOT EXISTS "${schema}"`);
   await client.end();
@@ -39,7 +59,7 @@ export const ensureSchema = async (schema: string) => {
 
 export const dropSchema = async (schema: string) => {
   if (schema === 'public') return;
-  const client = new Client({ connectionString: withoutSchema(BASE_DATABASE_URL) });
+  const client = new Client({ connectionString: withoutSchema(getBaseDatabaseUrl()) });
   await client.connect();
   await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
   await client.end();

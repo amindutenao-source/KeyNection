@@ -11,6 +11,7 @@ import Properties from "./pages/Properties";
 import PropertyDetail from "./pages/PropertyDetail";
 import Applications from "./pages/Applications";
 import Contracts from "./pages/Contracts";
+import Admin from "./pages/Admin";
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
               <Route path="/properties/:id" element={<PropertyDetail />} />
               <Route path="/applications" element={<Applications />} />
               <Route path="/contracts" element={<Contracts />} />
+              <Route path="/admin" element={<Admin />} />
             </Routes>
           </main>
           <Footer />

@@ -26,6 +26,18 @@ interface StatBlock {
   revenue: string;
 }
 
+interface AdminStats {
+  users: number;
+  properties: number;
+  applications: number;
+  contracts: number;
+  payments: number;
+  maintenance: number;
+  documents: number;
+  reviews: number;
+  revenue: number;
+}
+
 interface ActivityItem {
   id: string;
   message: string;
@@ -41,6 +53,7 @@ export default function Dashboard() {
     contracts: 0,
     revenue: "—"
   });
+  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +106,16 @@ export default function Dashboard() {
       setIsLoading(true);
       setError(null);
       try {
-        if (user.role === "OWNER") {
+        if (user.role === "ADMIN") {
+          const response = await apiGet<{ stats: AdminStats; recentActivity: ActivityItem[] }>("/admin/overview");
+          const overview = response.data;
+          setAdminStats(overview.stats);
+          const formattedActivity = overview.recentActivity.map((item) => ({
+            ...item,
+            time: new Date(item.time).toLocaleDateString("fr-FR")
+          }));
+          setRecentActivity(formattedActivity);
+        } else if (user.role === "OWNER") {
           await loadOwnerData();
         } else {
           await loadManagerData();
@@ -109,8 +131,37 @@ export default function Dashboard() {
     load();
   }, [user]);
 
-  const statsCards = useMemo(
-    () => [
+  const statsCards = useMemo(() => {
+    if (user?.role === "ADMIN" && adminStats) {
+      return [
+        {
+          label: "Utilisateurs",
+          value: adminStats.users,
+          badgeClass: "bg-blue-100",
+          iconClass: "text-blue-600"
+        },
+        {
+          label: "Propriétés",
+          value: adminStats.properties,
+          badgeClass: "bg-green-100",
+          iconClass: "text-green-600"
+        },
+        {
+          label: "Contrats",
+          value: adminStats.contracts,
+          badgeClass: "bg-purple-100",
+          iconClass: "text-purple-600"
+        },
+        {
+          label: "Revenus",
+          value: new Intl.NumberFormat("fr-FR", { style: "currency", currency: "USD" }).format(adminStats.revenue),
+          badgeClass: "bg-yellow-100",
+          iconClass: "text-yellow-600"
+        }
+      ];
+    }
+
+    return [
       {
         label: "Propriétés",
         value: stats.properties,
@@ -135,9 +186,8 @@ export default function Dashboard() {
         badgeClass: "bg-yellow-100",
         iconClass: "text-yellow-600"
       }
-    ],
-    [stats]
-  );
+    ];
+  }, [adminStats, stats, user]);
 
   return (
     <div className="min-h-screen bg-gray-50">

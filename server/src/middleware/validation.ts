@@ -59,6 +59,29 @@ export const userSchemas = {
     emergencyPhone: Joi.string().pattern(/^\+?[\d\s()-]+$/).optional()
   }),
 
+  adminUpdate: Joi.object({
+    firstName: Joi.string().min(2).max(50).optional(),
+    lastName: Joi.string().min(2).max(50).optional(),
+    phone: Joi.string().pattern(/^\+?[\d\s()-]+$/).optional(),
+    avatar: Joi.string().uri().optional(),
+    bio: Joi.string().max(500).optional(),
+    address: Joi.string().max(200).optional(),
+    city: Joi.string().max(100).optional(),
+    state: Joi.string().max(100).optional(),
+    zipCode: Joi.string().max(20).optional(),
+    country: Joi.string().max(100).optional(),
+    dateOfBirth: Joi.date().max('now').optional(),
+    identificationNumber: Joi.string().max(50).optional(),
+    taxId: Joi.string().max(50).optional(),
+    bankAccount: Joi.string().max(100).optional(),
+    emergencyContact: Joi.string().max(100).optional(),
+    emergencyPhone: Joi.string().pattern(/^\+?[\d\s()-]+$/).optional(),
+    role: Joi.string().valid('OWNER', 'MANAGER', 'ADMIN').optional(),
+    status: Joi.string().valid('ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING').optional(),
+    emailVerified: Joi.boolean().optional(),
+    phoneVerified: Joi.boolean().optional()
+  }),
+
   changePassword: Joi.object({
     currentPassword: Joi.string().required(),
     newPassword: Joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/).required()
@@ -276,6 +299,13 @@ export const paymentSchemas = {
     currency: Joi.string().length(3).default('USD').optional(),
     method: Joi.string().valid('CREDIT_CARD', 'BANK_TRANSFER', 'PAYPAL', 'STRIPE', 'CASH').required(),
     description: Joi.string().max(200).optional()
+  }),
+  update: Joi.object({
+    status: Joi.string().valid('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED', 'CANCELLED').optional(),
+    receiptUrl: Joi.string().uri().optional(),
+    failureReason: Joi.string().max(200).optional(),
+    transactionId: Joi.string().max(200).optional(),
+    processedAt: Joi.date().optional()
   })
 };
 
@@ -321,6 +351,24 @@ export const reviewSchemas = {
     rating: Joi.number().integer().min(1).max(5).required(),
     title: Joi.string().max(200).optional(),
     comment: Joi.string().max(1000).optional()
+  }),
+  update: Joi.object({
+    rating: Joi.number().integer().min(1).max(5).optional(),
+    title: Joi.string().max(200).optional(),
+    comment: Joi.string().max(1000).optional()
+  })
+};
+
+// Document validation schemas
+export const documentSchemas = {
+  create: Joi.object({
+    userId: Joi.string().min(1).optional(),
+    propertyId: Joi.string().min(1).optional(),
+    name: Joi.string().min(2).max(200).required(),
+    type: Joi.string().min(2).max(50).required(),
+    url: Joi.string().uri().required(),
+    size: Joi.number().integer().min(0).optional(),
+    mimeType: Joi.string().max(100).optional()
   })
 };
 
@@ -443,6 +491,7 @@ export const validateUser = {
   register: validate(userSchemas.register),
   login: validate(userSchemas.login),
   update: validate(userSchemas.update),
+  adminUpdate: validate(userSchemas.adminUpdate),
   changePassword: validate(userSchemas.changePassword),
   forgotPassword: validate(userSchemas.forgotPassword),
   resetPassword: validate(userSchemas.resetPassword)
@@ -470,7 +519,8 @@ export const validateNotification = {
 };
 
 export const validatePayment = {
-  create: validate(paymentSchemas.create)
+  create: validate(paymentSchemas.create),
+  update: validate(paymentSchemas.update)
 };
 
 export const validateMaintenanceRequest = {
@@ -483,7 +533,12 @@ export const validateMessage = {
 };
 
 export const validateReview = {
-  create: validate(reviewSchemas.create)
+  create: validate(reviewSchemas.create),
+  update: validate(reviewSchemas.update)
+};
+
+export const validateDocument = {
+  create: validate(documentSchemas.create)
 };
 
 export const validateId = validateParams(idSchema);

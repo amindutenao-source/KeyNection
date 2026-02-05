@@ -32,6 +32,7 @@ import documentRoutes from "./routes/documents";
 import messageRoutes from "./routes/messages";
 import reviewRoutes from "./routes/reviews";
 import userRoutes from "./routes/users";
+import adminRoutes from "./routes/admin";
 import { healthHandler } from "./routes/health";
 
 // Load environment variables
@@ -211,6 +212,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
 
 // API info endpoint
 app.get("/api", (req, res) => {

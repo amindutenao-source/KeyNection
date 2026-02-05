@@ -1,18 +1,18 @@
-# Use Node.js 18 Alpine as base image
-FROM node:18-alpine
+# Use Node.js 20 Alpine as base image
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Install dependencies for native modules
-RUN apk add --no-cache python3 make g++
+# Install dependencies for native modules and health checks
+RUN apk add --no-cache python3 make g++ curl
 
 # Copy package files
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (including dev for build)
+RUN npm ci
 
 # Generate Prisma client
 RUN npx prisma generate
