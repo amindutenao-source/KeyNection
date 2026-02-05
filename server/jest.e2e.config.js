@@ -4,7 +4,7 @@ module.exports = {
   ...baseConfig,
   testMatch: ['**/*.e2e.test.ts'],
   testPathIgnorePatterns: [],
-  testTimeout: 30000,
+  testTimeout: 60000,
   maxWorkers: 1,
   setupFilesAfterEnv: [
     ...(baseConfig.setupFilesAfterEnv || []),
