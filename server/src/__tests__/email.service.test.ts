@@ -17,8 +17,6 @@ import { EmailService } from '../services/emailService';
 describe('EmailService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, 'log').mockImplementation(() => undefined);
-    jest.spyOn(console, 'error').mockImplementation(() => undefined);
     process.env.FRONTEND_URL = 'http://localhost:3000';
     process.env.SUPPORT_EMAIL = 'support@keynection.com';
     process.env.SMTP_USER = 'smtp@example.com';
@@ -28,11 +26,6 @@ describe('EmailService', () => {
     process.env.SMTP_SECURE = 'false';
     process.env.NODE_ENV = 'test';
     process.env.DISABLE_EMAIL = 'false';
-  });
-
-  afterEach(() => {
-    (console.log as jest.Mock).mockRestore();
-    (console.error as jest.Mock).mockRestore();
   });
 
   it('sends a welcome email', async () => {
