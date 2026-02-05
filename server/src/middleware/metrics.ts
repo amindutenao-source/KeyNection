@@ -55,17 +55,18 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
   next();
 };
 
-export const metricsEndpoint = async (req: Request, res: Response) => {
+export const metricsEndpoint = async (req: Request, res: Response): Promise<void> => {
   const token = process.env.METRICS_TOKEN;
   if (token) {
     const headerToken =
       req.get('x-metrics-token') || req.get('authorization')?.replace(/^Bearer\s+/i, '');
     if (!headerToken || headerToken !== token) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: 'Unauthorized',
         error: 'UNAUTHORIZED'
       });
+      return;
     }
   }
 
