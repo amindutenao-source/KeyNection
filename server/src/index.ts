@@ -10,6 +10,8 @@ import dotenv from "dotenv";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
 import "./types/express";
+import logger from "./utils/logger";
+import { metricsEndpoint, metricsMiddleware } from "./middleware/metrics";
 
 // Import middleware
 import { 
@@ -157,6 +159,13 @@ if (process.env.NODE_ENV === "development") {
 
 app.use(requestLogger as unknown as RequestHandler);
 
+// Metrics (optional)
+const metricsEnabled = process.env.METRICS_ENABLED === "true";
+if (metricsEnabled) {
+  app.use(metricsMiddleware);
+  app.get("/metrics", metricsEndpoint);
+}
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -250,13 +259,13 @@ process.on("uncaughtException", handleUncaughtException);
 
 // Graceful shutdown
 process.on("SIGTERM", async () => {
-  console.log("SIGTERM received, shutting down gracefully");
+  logger.info("SIGTERM received, shutting down gracefully");
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on("SIGINT", async () => {
-  console.log("SIGINT received, shutting down gracefully");
+  logger.info("SIGINT received, shutting down gracefully");
   await prisma.$disconnect();
   process.exit(0);
 });
@@ -265,9 +274,9 @@ process.on("SIGINT", async () => {
 async function testDatabaseConnection() {
   try {
     await prisma.$connect();
-    console.log("✅ Database connected successfully");
+    logger.info("Database connected successfully");
   } catch (error) {
-    console.error("❌ Database connection failed:", error);
+    logger.error("Database connection failed", { error });
     process.exit(1);
   }
 }
@@ -280,13 +289,13 @@ async function startServer() {
 
     // Start server
     app.listen(PORT, () => {
-      console.log(`🚀 KeyNection API server running on port ${PORT}`);
-      console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
-      console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+      logger.info(`KeyNection API server running on port ${PORT}`);
+      logger.info(`API Documentation: http://localhost:${PORT}/api-docs`);
+      logger.info(`Health Check: http://localhost:${PORT}/health`);
+      logger.info(`Environment: ${process.env.NODE_ENV || "development"}`);
     });
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    logger.error("Failed to start server", { error });
     process.exit(1);
   }
 }

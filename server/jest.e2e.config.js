@@ -5,5 +5,9 @@ module.exports = {
   testMatch: ['**/*.e2e.test.ts'],
   testPathIgnorePatterns: [],
   testTimeout: 30000,
-  maxWorkers: 1
+  maxWorkers: 1,
+  setupFilesAfterEnv: [
+    ...(baseConfig.setupFilesAfterEnv || []),
+    '<rootDir>/src/test/e2e.setup.ts'
+  ]
 };

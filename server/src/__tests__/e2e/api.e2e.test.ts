@@ -8,6 +8,7 @@ import {
   dropSchema,
   pushSchema
 } from './testDb';
+import { fixtures } from '../../test/fixtures';
 
 let app: any;
 let prisma: PrismaClient;
@@ -114,7 +115,8 @@ beforeAll(async () => {
       amenities: [],
       images: [],
       listedAt: new Date(),
-      ownerId
+      ownerId,
+      managerId
     }
   });
   propertyId = property.id;
@@ -161,15 +163,39 @@ describeE2E('E2E API with real DB', () => {
     expect(users.body.data.length).toBeGreaterThan(0);
   });
 
+  itIfDb('non-admins cannot access admin endpoints', async () => {
+    const ownerOverview = await request(app)
+      .get('/api/admin/overview')
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    expect(ownerOverview.status).toBe(403);
+
+    const managerUsers = await request(app)
+      .get('/api/users')
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    expect(managerUsers.status).toBe(403);
+  });
+
+  itIfDb('manager cannot create properties (owner-only)', async () => {
+    const create = await request(app)
+      .post('/api/properties')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send(
+        fixtures.property({
+          title: 'Forbidden property',
+          description: 'Should not be created by manager'
+        })
+      );
+
+    expect(create.status).toBe(403);
+  });
+
   itIfDb('users can send and read messages', async () => {
     const sent = await request(app)
       .post('/api/messages')
       .set('Authorization', `Bearer ${ownerToken}`)
-      .send({
-        recipientId: managerId,
-        subject: 'Hello',
-        content: 'Test message'
-      });
+      .send(fixtures.message(managerId, { subject: 'Hello', content: 'Test message' }));
 
     expect(sent.status).toBe(201);
 
@@ -188,48 +214,78 @@ describeE2E('E2E API with real DB', () => {
 
     expect(marked.status).toBe(200);
     expect(marked.body.data.read).toBe(true);
+
+    const allMessages = await request(app)
+      .get('/api/messages?box=all')
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    expect(allMessages.status).toBe(200);
+    expect(allMessages.body.data.some((msg: any) => msg.id === messageId)).toBe(true);
   });
 
   itIfDb('owner can create maintenance request', async () => {
     const response = await request(app)
       .post('/api/maintenance')
       .set('Authorization', `Bearer ${ownerToken}`)
-      .send({
-        propertyId,
-        title: 'Leaking faucet',
-        description: 'Kitchen faucet is leaking',
-        priority: 'HIGH'
-      });
+      .send(
+        fixtures.maintenance(propertyId, {
+          title: 'Leaking faucet',
+          description: 'Kitchen faucet is leaking',
+          priority: 'HIGH'
+        })
+      );
 
     expect(response.status).toBe(201);
     expect(response.body.data.propertyId).toBe(propertyId);
+
+    const list = await request(app)
+      .get(`/api/maintenance?propertyId=${propertyId}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    expect(list.status).toBe(200);
+    expect(list.body.data.some((req: any) => req.id === response.body.data.id)).toBe(true);
   });
 
   itIfDb('manager can create payment and document', async () => {
     const payment = await request(app)
       .post('/api/payments')
       .set('Authorization', `Bearer ${managerToken}`)
-      .send({
-        contractId,
-        amount: 1200,
-        method: 'BANK_TRANSFER',
-        description: 'Test payment'
-      });
+      .send(
+        fixtures.payment(contractId, {
+          amount: 1200,
+          method: 'BANK_TRANSFER',
+          description: 'Test payment'
+        })
+      );
 
     expect(payment.status).toBe(201);
 
     const document = await request(app)
       .post('/api/documents')
       .set('Authorization', `Bearer ${managerToken}`)
-      .send({
-        name: 'Test Document',
-        type: 'CONTRACT',
-        url: 'https://example.com/test.pdf',
-        size: 1024,
-        mimeType: 'application/pdf'
-      });
+      .send(
+        fixtures.document(propertyId, {
+          name: 'Test Document',
+          url: 'https://example.com/test.pdf',
+          size: 1024
+        })
+      );
 
     expect(document.status).toBe(201);
+
+    const paymentList = await request(app)
+      .get(`/api/payments?contractId=${contractId}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    expect(paymentList.status).toBe(200);
+    expect(paymentList.body.data.some((p: any) => p.id === payment.body.data.id)).toBe(true);
+
+    const docList = await request(app)
+      .get(`/api/documents?propertyId=${propertyId}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    expect(docList.status).toBe(200);
+    expect(docList.body.data.some((d: any) => d.id === document.body.data.id)).toBe(true);
   });
 
   itIfDb('admin can update user status', async () => {
@@ -266,12 +322,7 @@ describeE2E('E2E API with real DB', () => {
     const created = await request(app)
       .post('/api/payments')
       .set('Authorization', `Bearer ${managerToken}`)
-      .send({
-        contractId,
-        amount: 900,
-        method: 'CASH',
-        description: 'Second payment'
-      });
+      .send(fixtures.payment(contractId, { amount: 900, method: 'CASH', description: 'Second payment' }));
 
     expect(created.status).toBe(201);
     const paymentId = created.body.data.id;
@@ -290,18 +341,26 @@ describeE2E('E2E API with real DB', () => {
 
     expect(fetched.status).toBe(200);
     expect(fetched.body.data.id).toBe(paymentId);
+
+    const list = await request(app)
+      .get(`/api/payments?contractId=${contractId}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    expect(list.status).toBe(200);
+    expect(list.body.data.some((p: any) => p.id === paymentId)).toBe(true);
   });
 
   itIfDb('maintenance lifecycle: update and delete', async () => {
     const created = await request(app)
       .post('/api/maintenance')
       .set('Authorization', `Bearer ${ownerToken}`)
-      .send({
-        propertyId,
-        title: 'Broken window',
-        description: 'Living room window cracked',
-        priority: 'MEDIUM'
-      });
+      .send(
+        fixtures.maintenance(propertyId, {
+          title: 'Broken window',
+          description: 'Living room window cracked',
+          priority: 'MEDIUM'
+        })
+      );
 
     expect(created.status).toBe(201);
     const requestId = created.body.data.id;
@@ -314,6 +373,12 @@ describeE2E('E2E API with real DB', () => {
     expect(updated.status).toBe(200);
     expect(updated.body.data.status).toBe('IN_PROGRESS');
 
+    const forbiddenDelete = await request(app)
+      .delete(`/api/maintenance/${requestId}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    expect(forbiddenDelete.status).toBe(403);
+
     const deleted = await request(app)
       .delete(`/api/maintenance/${requestId}`)
       .set('Authorization', `Bearer ${adminToken}`);
@@ -325,11 +390,12 @@ describeE2E('E2E API with real DB', () => {
     const created = await request(app)
       .post('/api/documents')
       .set('Authorization', `Bearer ${managerToken}`)
-      .send({
-        name: 'Admin doc',
-        type: 'CONTRACT',
-        url: 'https://example.com/admin-doc.pdf'
-      });
+      .send(
+        fixtures.document(propertyId, {
+          name: 'Admin doc',
+          url: 'https://example.com/admin-doc.pdf'
+        })
+      );
 
     expect(created.status).toBe(201);
     const docId = created.body.data.id;
@@ -339,6 +405,12 @@ describeE2E('E2E API with real DB', () => {
       .set('Authorization', `Bearer ${managerToken}`);
 
     expect(deleted.status).toBe(200);
+
+    const list = await request(app)
+      .get(`/api/documents?propertyId=${propertyId}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    expect(list.status).toBe(200);
   });
 
   itIfDb('review lifecycle: create, update, delete', async () => {
@@ -364,12 +436,13 @@ describeE2E('E2E API with real DB', () => {
     const created = await request(app)
       .post('/api/reviews')
       .set('Authorization', `Bearer ${managerToken}`)
-      .send({
-        propertyId: reviewProperty.id,
-        rating: 4,
-        title: 'Bonne expérience',
-        comment: 'RAS'
-      });
+      .send(
+        fixtures.review(reviewProperty.id, {
+          rating: 4,
+          title: 'Bonne expérience',
+          comment: 'RAS'
+        })
+      );
 
     expect(created.status).toBe(201);
     const reviewId = created.body.data.id;
@@ -381,6 +454,12 @@ describeE2E('E2E API with real DB', () => {
 
     expect(updated.status).toBe(200);
     expect(updated.body.data.rating).toBe(5);
+
+    const list = await request(app)
+      .get(`/api/reviews?propertyId=${reviewProperty.id}`);
+
+    expect(list.status).toBe(200);
+    expect(list.body.data.some((review: any) => review.id === reviewId)).toBe(true);
 
     const deleted = await request(app)
       .delete(`/api/reviews/${reviewId}`)

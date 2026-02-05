@@ -8,19 +8,13 @@ import {
   pushSchema
 } from './e2e/testDb';
 
-const TEST_SCHEMA = buildSchemaName('auth');
-const TEST_DATABASE_URL = createTestDatabaseUrl(TEST_SCHEMA);
-
-process.env.NODE_ENV = 'test';
-process.env.DATABASE_URL = TEST_DATABASE_URL;
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
-
 const shouldSkipE2E = process.env.SKIP_E2E === 'true';
 const describeE2E = shouldSkipE2E ? describe.skip : describe;
 
 describeE2E('Auth API (e2e)', () => {
   let app: any;
   let prisma: any;
+  let schemaName: string;
   let dbReady = true;
 
   const itIfDb = (title: string, fn: () => Promise<void>) => {
@@ -34,20 +28,26 @@ describeE2E('Auth API (e2e)', () => {
   };
 
   beforeAll(async () => {
+    schemaName = buildSchemaName('auth');
+    let databaseUrl = '';
+
     try {
-      await ensureSchema(TEST_SCHEMA);
-      pushSchema(TEST_DATABASE_URL);
+      await ensureSchema(schemaName);
+      databaseUrl = createTestDatabaseUrl(schemaName);
+
+      process.env.DATABASE_URL = databaseUrl;
+      process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+      process.env.DISABLE_EMAIL = 'true';
+
+      pushSchema(databaseUrl);
+
+      const mod = await import('../index');
+      app = mod.app;
+      prisma = mod.prisma;
     } catch (error) {
       dbReady = false;
       console.warn('E2E database setup failed:', error);
-      return;
     }
-
-    const { default: importedApp } = await import('../index');
-    app = importedApp;
-
-    const { PrismaClient } = await import('@prisma/client');
-    prisma = new PrismaClient();
   });
 
   afterAll(async () => {
@@ -57,7 +57,9 @@ describeE2E('Auth API (e2e)', () => {
     if (prisma) {
       await prisma.$disconnect();
     }
-    await dropSchema(TEST_SCHEMA);
+    if (schemaName) {
+      await dropSchema(schemaName);
+    }
   });
 
   itIfDb('logs in and accesses a protected endpoint', async () => {

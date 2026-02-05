@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { MessageController } from '../controllers/messageController';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, requireOwnerOrManager } from '../middleware/auth';
 import { validate, messageSchemas } from '../middleware/validation';
 
 const router = Router();
@@ -10,34 +10,40 @@ const router = Router();
  * @desc    Obtenir les messages de l'utilisateur
  * @access  Private
  */
-router.get('/', authenticateToken, MessageController.getMessages);
+router.get('/', authenticateToken, requireOwnerOrManager, MessageController.getMessages);
 
 /**
  * @route   GET /api/messages/:id
  * @desc    Obtenir un message par ID
  * @access  Private
  */
-router.get('/:id', authenticateToken, MessageController.getMessageById);
+router.get('/:id', authenticateToken, requireOwnerOrManager, MessageController.getMessageById);
 
 /**
  * @route   POST /api/messages
  * @desc    Envoyer un message
  * @access  Private
  */
-router.post('/', authenticateToken, validate(messageSchemas.create), MessageController.createMessage);
+router.post(
+  '/',
+  authenticateToken,
+  requireOwnerOrManager,
+  validate(messageSchemas.create),
+  MessageController.createMessage
+);
 
 /**
  * @route   PUT /api/messages/:id/read
  * @desc    Marquer un message comme lu
  * @access  Private
  */
-router.put('/:id/read', authenticateToken, MessageController.markAsRead);
+router.put('/:id/read', authenticateToken, requireOwnerOrManager, MessageController.markAsRead);
 
 /**
  * @route   DELETE /api/messages/:id
  * @desc    Supprimer un message
  * @access  Private
  */
-router.delete('/:id', authenticateToken, MessageController.deleteMessage);
+router.delete('/:id', authenticateToken, requireOwnerOrManager, MessageController.deleteMessage);
 
 export default router;

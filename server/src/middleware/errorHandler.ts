@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClientKnownRequestError, PrismaClientValidationError } from '@prisma/client/runtime/library';
+import logger from '../utils/logger';
 
 // Custom error classes
 export class AppError extends Error {
@@ -159,7 +160,7 @@ export const errorHandler = (
 
   // Log error in development
   if (process.env.NODE_ENV === 'development') {
-    console.error('Error details:', {
+    logger.error('Error details', {
       message: error.message,
       stack: error.stack,
       url: req.url,
@@ -173,7 +174,7 @@ export const errorHandler = (
 
   // Log error in production (without sensitive data)
   if (process.env.NODE_ENV === 'production') {
-    console.error('Production error:', {
+    logger.error('Production error', {
       message: error.message,
       code,
       statusCode,
@@ -223,7 +224,7 @@ export const notFoundHandler = (req: Request, res: Response) => {
 
 // Global error handler for unhandled rejections
 export const handleUnhandledRejection = (reason: any, promise: Promise<any>) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('Unhandled Rejection', { reason, promise });
   
   // In production, you might want to exit the process
   if (process.env.NODE_ENV === 'production') {
@@ -233,7 +234,7 @@ export const handleUnhandledRejection = (reason: any, promise: Promise<any>) => 
 
 // Global error handler for uncaught exceptions
 export const handleUncaughtException = (error: Error) => {
-  console.error('Uncaught Exception:', error);
+  logger.error('Uncaught Exception', { message: error.message, stack: error.stack });
   
   // In production, you might want to exit the process
   if (process.env.NODE_ENV === 'production') {
@@ -258,9 +259,9 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
     };
 
     if (res.statusCode >= 400) {
-      console.error('Request failed:', logData);
+      logger.warn('Request failed', logData);
     } else {
-      console.log('Request completed:', logData);
+      logger.info('Request completed', logData);
     }
   });
 
@@ -298,11 +299,11 @@ export const securityErrorHandler = (error: any, req: Request, res: Response, ne
 
 // Database connection error handler
 export const databaseErrorHandler = (error: any) => {
-  console.error('Database connection error:', error);
+  logger.error('Database connection error', { error });
   
   if (process.env.NODE_ENV === 'production') {
     // In production, you might want to implement retry logic
-    console.error('Database connection failed in production');
+    logger.error('Database connection failed in production');
   }
 };
 
