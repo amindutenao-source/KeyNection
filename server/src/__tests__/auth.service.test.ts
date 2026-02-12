@@ -1,4 +1,5 @@
 import { AuthenticationError, ConflictError, NotFoundError } from '../middleware/errorHandler';
+import { AuthService } from '../services/authService';
 import { UserRole, UserStatus } from '../types';
 
 jest.mock('bcryptjs', () => ({
@@ -87,10 +88,7 @@ const baseUser = (overrides: Record<string, any> = {}) => ({
   ...overrides
 });
 
-const buildService = async () => {
-  const { AuthService } = await import('../services/authService');
-  return new AuthService();
-};
+const buildService = () => new AuthService();
 
 describe('AuthService', () => {
   beforeEach(() => {
@@ -108,10 +106,14 @@ describe('AuthService', () => {
     emailMock.sendEmail.mockResolvedValue(undefined);
   });
 
-  it('throws when JWT_SECRET is missing', async () => {
-    delete process.env.JWT_SECRET;
-    jest.resetModules();
-    await expect(import('../services/authService')).rejects.toThrow('JWT_SECRET is not configured');
+  it('throws when JWT_SECRET is missing', () => {
+    process.env.JWT_SECRET = '';
+    expect(() => {
+      jest.isolateModules(() => {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        require('../services/authService');
+      });
+    }).toThrow('JWT_SECRET is not configured');
   });
 
   it('registers a new user and returns tokens', async () => {
