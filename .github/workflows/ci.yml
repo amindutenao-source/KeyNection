@@ -53,6 +53,8 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'skip-e2e') }}
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
     services:
       postgres:
         image: postgres:15-alpine

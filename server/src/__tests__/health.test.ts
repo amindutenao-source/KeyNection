@@ -17,4 +17,19 @@ describe('Health endpoint', () => {
       })
     );
   });
+
+  it('returns version from env when set', () => {
+    process.env.npm_package_version = '2.0.0';
+    const json = jest.fn();
+    const status = jest.fn(() => ({ json }));
+    const res = { status } as unknown as Response;
+
+    healthHandler({} as Request, res);
+
+    expect(json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: '2.0.0'
+      })
+    );
+  });
 });

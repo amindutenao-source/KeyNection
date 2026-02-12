@@ -114,4 +114,87 @@ describe('upload middleware helpers', () => {
     const fs = await import('fs');
     expect(fs.unlink).toHaveBeenCalled();
   });
+
+  it('handles delete errors', async () => {
+    const fs = await import('fs');
+    const unlinkMock = fs.unlink as unknown as jest.MockedFunction<typeof fs.unlink>;
+    unlinkMock.mockImplementationOnce((_path, callback) =>
+      callback(new Error('unlink failed') as NodeJS.ErrnoException)
+    );
+
+    await expect(deleteFile('dummy.png')).rejects.toBeDefined();
+  });
+
+  it('creates uploads directory when missing', () => {
+    jest.resetModules();
+    jest.doMock('fs', () => ({
+      existsSync: jest.fn(() => false),
+      mkdirSync: jest.fn(),
+      unlink: jest.fn((_path: string, cb: (err: NodeJS.ErrnoException | null) => void) => cb(null))
+    }));
+    jest.doMock('multer', () => {
+      const diskStorage = jest.fn(() => ({}));
+      const multerFn: any = () => ({});
+      multerFn.diskStorage = diskStorage;
+      multerFn.MulterError = class MulterError extends Error {
+        code?: string;
+        constructor(code: string) {
+          super(code);
+          this.code = code;
+        }
+      };
+      return multerFn;
+    });
+
+    jest.isolateModules(() => {
+      require('../middleware/upload');
+      const fs = require('fs');
+      expect(fs.mkdirSync).toHaveBeenCalledWith(expect.any(String), { recursive: true });
+    });
+  });
+
+  it('configures storage and file filter', () => {
+    let capturedFileFilter: any;
+
+    jest.isolateModules(() => {
+      jest.doMock('fs', () => ({
+        existsSync: jest.fn(() => false),
+        mkdirSync: jest.fn(),
+        unlink: jest.fn((_path: string, cb: (err: NodeJS.ErrnoException | null) => void) => cb(null))
+      }));
+
+      jest.doMock('multer', () => {
+        const diskStorage = jest.fn((options: any) => {
+          options.destination({}, { originalname: 'photo.png', fieldname: 'images' }, jest.fn());
+          options.filename({}, { originalname: 'photo.png', fieldname: 'images' }, jest.fn());
+          return {};
+        });
+
+        const multerFn: any = (options: any) => {
+          capturedFileFilter = options.fileFilter;
+          return { options };
+        };
+        multerFn.diskStorage = diskStorage;
+        multerFn.MulterError = class MulterError extends Error {
+          code?: string;
+          constructor(code: string) {
+            super(code);
+            this.code = code;
+          }
+        };
+
+        return multerFn;
+      });
+
+      require('../middleware/upload');
+    });
+
+    const cb = jest.fn();
+    capturedFileFilter?.({}, { originalname: 'photo.png', mimetype: 'image/png' }, cb);
+    expect(cb).toHaveBeenCalledWith(null, true);
+
+    const cbReject = jest.fn();
+    capturedFileFilter?.({}, { originalname: 'file.txt', mimetype: 'text/plain' }, cbReject);
+    expect(cbReject).toHaveBeenCalledWith(expect.any(Error));
+  });
 });

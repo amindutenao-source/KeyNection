@@ -84,6 +84,41 @@ describe('PropertyController listing', () => {
     );
   });
 
+  it('handles alternate query aliases and default sorting', async () => {
+    prismaMock.property.findMany.mockResolvedValue([]);
+    prismaMock.property.count.mockResolvedValue(0);
+
+    const req = {
+      query: {
+        propertyType: 'HOUSE',
+        minBedrooms: '3',
+        bathrooms: '2',
+        petsAllowed: 'true',
+        smokingAllowed: 'false',
+        sortBy: 'invalid',
+        sortOrder: 'invalid'
+      }
+    } as unknown as Request;
+
+    const res = createRes();
+
+    PropertyController.getAllProperties(req, res, jest.fn());
+    await flushPromises();
+
+    expect(prismaMock.property.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          type: 'HOUSE',
+          bedrooms: { gte: 3 },
+          bathrooms: { gte: 2 },
+          petsAllowed: true,
+          smokingAllowed: false
+        }),
+        orderBy: { createdAt: 'desc' }
+      })
+    );
+  });
+
   it('builds search filters for searchProperties', async () => {
     prismaMock.property.findMany.mockResolvedValue([
       { id: 'prop-1', title: 'Search' }
@@ -116,6 +151,33 @@ describe('PropertyController listing', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: true
+      })
+    );
+  });
+
+  it('searches properties without query term', async () => {
+    prismaMock.property.findMany.mockResolvedValue([]);
+
+    const req = {
+      query: {
+        type: 'APARTMENT',
+        status: 'AVAILABLE',
+        maxPrice: '1500'
+      }
+    } as unknown as Request;
+
+    const res = createRes();
+
+    PropertyController.searchProperties(req, res, jest.fn());
+    await flushPromises();
+
+    expect(prismaMock.property.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          type: 'APARTMENT',
+          status: 'AVAILABLE',
+          monthlyRent: { gte: undefined, lte: 1500 }
+        })
       })
     );
   });

@@ -109,6 +109,26 @@ describe('awsS3 service', () => {
     });
   });
 
+  it('uploads an object without public URL', async () => {
+    process.env.AWS_REGION = 'us-east-1';
+    process.env.AWS_S3_BUCKET = 'bucket';
+
+    const { uploadObject } = await import('../services/awsS3');
+    const aws = getAwsMock();
+
+    aws.__sendMock.mockResolvedValueOnce({});
+
+    const result = await uploadObject({
+      key: 'uploads/file.txt',
+      body: 'hello'
+    });
+
+    expect(result).toEqual({
+      key: 'uploads/file.txt',
+      url: undefined
+    });
+  });
+
   it('deletes an object', async () => {
     process.env.AWS_REGION = 'us-east-1';
     process.env.AWS_S3_BUCKET = 'bucket';

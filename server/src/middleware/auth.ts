@@ -96,19 +96,19 @@ export const authenticate = (options: AuthOptions = {}) => {
       req.user = user;
       return next();
     } catch (error) {
-      if (error instanceof jwt.JsonWebTokenError) {
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid token',
-          error: 'UNAUTHORIZED'
-        });
-      }
-
       if (error instanceof jwt.TokenExpiredError) {
         return res.status(401).json({
           success: false,
           message: 'Token expired',
           error: 'TOKEN_EXPIRED'
+        });
+      }
+
+      if (error instanceof jwt.JsonWebTokenError) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid token',
+          error: 'UNAUTHORIZED'
         });
       }
 

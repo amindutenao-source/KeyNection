@@ -82,6 +82,20 @@ describe('EmailService', () => {
     await service.sendTestEmail('user@example.com');
   });
 
+  it('handles verification errors', () => {
+    const nodemailer = (jest.requireMock('nodemailer') as { createTransport: jest.Mock }).createTransport;
+    nodemailer.mockReturnValueOnce({
+      sendMail: jest.fn().mockResolvedValue(undefined),
+      verify: jest.fn((cb: (err?: Error | null) => void) => cb(new Error('verify failed')))
+    });
+
+    process.env.NODE_ENV = 'production';
+    process.env.DISABLE_EMAIL = 'false';
+
+    const service = new EmailService();
+    expect(service).toBeDefined();
+  });
+
   it('uses fallback template when file is missing', async () => {
     const fs = await import('fs');
     (fs.existsSync as jest.Mock).mockReturnValueOnce(false);
@@ -103,6 +117,27 @@ describe('EmailService', () => {
     await service.sendContractNotification('user@example.com', 'MANAGEMENT', 'Property 2');
     await service.sendPaymentConfirmation('user@example.com', 1200, 'Rent', 'tx-1');
     await service.sendMaintenanceNotification('user@example.com', 'Property 3', 'Fix AC', 'HIGH');
+
+    const nodemailer = (jest.requireMock('nodemailer') as { createTransport: jest.Mock }).createTransport;
+    const transport = nodemailer.mock.results[0].value;
+    expect(transport.sendMail).toHaveBeenCalled();
+  });
+
+  it('uses fallback support email and default environment', async () => {
+    delete process.env.SUPPORT_EMAIL;
+    delete process.env.NODE_ENV;
+
+    const service = new EmailService();
+
+    await service.sendWelcomeEmail('user@example.com', 'Jean');
+    await service.sendVerificationEmail('user@example.com', 'token-123');
+    await service.sendPasswordResetEmail('user@example.com', 'token-123');
+    await service.sendApplicationNotification('user@example.com', 'Property 1', 'Alice');
+    await service.sendContractNotification('user@example.com', 'LEASE', 'Property 2');
+    await service.sendPaymentConfirmation('user@example.com', 42.5, 'Rent', 'tx-2');
+    await service.sendMaintenanceNotification('user@example.com', 'Property 3', 'Fix AC', 'HIGH');
+    await service.sendGeneralNotification('user@example.com', 'Hello', 'World');
+    await service.sendTestEmail('user@example.com');
 
     const nodemailer = (jest.requireMock('nodemailer') as { createTransport: jest.Mock }).createTransport;
     const transport = nodemailer.mock.results[0].value;

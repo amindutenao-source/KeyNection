@@ -37,6 +37,31 @@ describe('UserController', () => {
     jest.clearAllMocks();
   });
 
+  it('lists users with filters', async () => {
+    const req = {
+      user: { id: 'admin-1', role: 'ADMIN' },
+      query: { role: 'OWNER', status: 'ACTIVE', search: 'john', page: '1', limit: '5' }
+    } as unknown as AuthenticatedRequest;
+
+    prismaMock.user.findMany.mockResolvedValue([]);
+    prismaMock.user.count.mockResolvedValue(0);
+
+    const res = createRes();
+
+    UserController.getUsers(req, res, jest.fn());
+    await flushPromises();
+
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          role: 'OWNER',
+          status: 'ACTIVE',
+          OR: expect.any(Array)
+        })
+      })
+    );
+  });
+
   it('prevents non-admin from accessing another user', async () => {
     const req = {
       params: { id: 'user-2' },
@@ -46,6 +71,53 @@ describe('UserController', () => {
     const res = createRes();
 
     UserController.getUserById(req, res, jest.fn());
+    await flushPromises();
+
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it('returns 404 when user is missing', async () => {
+    const req = {
+      params: { id: 'user-1' },
+      user: { id: 'user-1', role: 'OWNER' }
+    } as unknown as AuthenticatedRequest;
+
+    prismaMock.user.findUnique.mockResolvedValue(null);
+
+    const res = createRes();
+
+    UserController.getUserById(req, res, jest.fn());
+    await flushPromises();
+
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it('returns user when self-access', async () => {
+    const req = {
+      params: { id: 'user-1' },
+      user: { id: 'user-1', role: 'OWNER' }
+    } as unknown as AuthenticatedRequest;
+
+    prismaMock.user.findUnique.mockResolvedValue({ id: 'user-1' });
+
+    const res = createRes();
+
+    UserController.getUserById(req, res, jest.fn());
+    await flushPromises();
+
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+  });
+
+  it('returns 403 when non-admin updates another user', async () => {
+    const req = {
+      params: { id: 'user-2' },
+      body: { firstName: 'New' },
+      user: { id: 'user-1', role: 'OWNER' }
+    } as unknown as AuthenticatedRequest;
+
+    const res = createRes();
+
+    UserController.updateUser(req, res, jest.fn());
     await flushPromises();
 
     expect(res.status).toHaveBeenCalledWith(403);
@@ -71,5 +143,45 @@ describe('UserController', () => {
       })
     );
     expect(res.json).toHaveBeenCalled();
+  });
+
+  it('updates user profile fields for self', async () => {
+    const req = {
+      params: { id: 'user-1' },
+      body: { firstName: 'Jane', phoneVerified: true },
+      user: { id: 'user-1', role: 'OWNER' }
+    } as unknown as AuthenticatedRequest;
+
+    prismaMock.user.update.mockResolvedValue({ id: 'user-1' });
+
+    const res = createRes();
+
+    UserController.updateUser(req, res, jest.fn());
+    await flushPromises();
+
+    expect(prismaMock.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          firstName: 'Jane'
+        })
+      })
+    );
+  });
+
+  it('deletes user when admin', async () => {
+    const req = {
+      params: { id: 'user-2' },
+      user: { id: 'admin-1', role: 'ADMIN' }
+    } as unknown as AuthenticatedRequest;
+
+    prismaMock.user.delete.mockResolvedValue({ id: 'user-2' });
+
+    const res = createRes();
+
+    UserController.deleteUser(req, res, jest.fn());
+    await flushPromises();
+
+    expect(prismaMock.user.delete).toHaveBeenCalledWith({ where: { id: 'user-2' } });
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 });

@@ -134,4 +134,79 @@ describe('AdminController', () => {
       })
     );
   });
+
+  it('filters audits by type and search', async () => {
+    const now = new Date();
+    prismaMock.payment.findMany.mockResolvedValue([
+      { id: 'pay-1', amount: 100, currency: 'USD', status: 'COMPLETED', createdAt: now },
+      { id: 'pay-2', amount: 50, currency: 'USD', status: 'FAILED', createdAt: now }
+    ]);
+    prismaMock.application.findMany.mockResolvedValue([
+      { id: 'app-1', status: 'APPROVED', createdAt: now }
+    ]);
+    prismaMock.contract.findMany.mockResolvedValue([]);
+    prismaMock.maintenanceRequest.findMany.mockResolvedValue([]);
+    prismaMock.review.findMany.mockResolvedValue([]);
+    prismaMock.document.findMany.mockResolvedValue([]);
+    prismaMock.user.findMany.mockResolvedValue([]);
+
+    const req = {
+      query: {
+        type: 'payment',
+        search: 'completed',
+        limit: '5'
+      }
+    } as unknown as AuthenticatedRequest;
+    const res = createRes();
+
+    AdminController.getAudits(req, res, jest.fn());
+    await flushPromises();
+
+    const response = (res.json as jest.Mock).mock.calls[0][0];
+    expect(response.data).toHaveLength(1);
+    expect(response.data[0]).toEqual(
+      expect.objectContaining({
+        type: 'PAYMENT',
+        message: expect.stringContaining('completed')
+      })
+    );
+  });
+
+  it('includes all audit types and sorts by date', async () => {
+    const now = new Date();
+    const earlier = new Date(now.getTime() - 1000);
+
+    prismaMock.payment.findMany.mockResolvedValue([
+      { id: 'pay-1', amount: 100, currency: 'USD', status: 'COMPLETED', createdAt: now },
+      { id: 'pay-2', amount: 50, currency: 'USD', status: 'FAILED', createdAt: earlier }
+    ]);
+    prismaMock.application.findMany.mockResolvedValue([
+      { id: 'app-1', status: 'APPROVED', createdAt: earlier }
+    ]);
+    prismaMock.contract.findMany.mockResolvedValue([
+      { id: 'contract-1', status: 'ACTIVE', createdAt: earlier }
+    ]);
+    prismaMock.maintenanceRequest.findMany.mockResolvedValue([
+      { id: 'maint-1', status: 'OPEN', title: 'Fix', createdAt: earlier }
+    ]);
+    prismaMock.review.findMany.mockResolvedValue([
+      { id: 'review-1', rating: 4, createdAt: earlier }
+    ]);
+    prismaMock.document.findMany.mockResolvedValue([
+      { id: 'doc-1', name: 'Lease', createdAt: earlier }
+    ]);
+    prismaMock.user.findMany.mockResolvedValue([
+      { id: 'user-1', firstName: 'Jean', lastName: 'Dupont', createdAt: earlier }
+    ]);
+
+    const req = { query: { limit: '10' } } as unknown as AuthenticatedRequest;
+    const res = createRes();
+
+    AdminController.getAudits(req, res, jest.fn());
+    await flushPromises();
+
+    const response = (res.json as jest.Mock).mock.calls[0][0];
+    expect(response.data.length).toBeGreaterThanOrEqual(7);
+    expect(response.data[0].createdAt).toBe(now.toISOString());
+  });
 });
