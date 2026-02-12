@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 
-const validateMock = jest.fn((schema?: any) => (_req: any, _res: any, next: any) => next());
+const validateMock = jest.fn((_schema?: any) => (_req: any, _res: any, next: any) => next());
 const validate = (schema: any) => validateMock(schema);
 
 jest.mock('../middleware/validation', () => ({

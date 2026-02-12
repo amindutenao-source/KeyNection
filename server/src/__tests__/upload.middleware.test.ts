@@ -125,7 +125,7 @@ describe('upload middleware helpers', () => {
     await expect(deleteFile('dummy.png')).rejects.toBeDefined();
   });
 
-  it('creates uploads directory when missing', () => {
+  it('creates uploads directory when missing', async () => {
     jest.resetModules();
     jest.doMock('fs', () => ({
       existsSync: jest.fn(() => false),
@@ -146,48 +146,45 @@ describe('upload middleware helpers', () => {
       return multerFn;
     });
 
-    jest.isolateModules(() => {
-      require('../middleware/upload');
-      const fs = require('fs');
-      expect(fs.mkdirSync).toHaveBeenCalledWith(expect.any(String), { recursive: true });
-    });
+    await import('../middleware/upload');
+    const fs = await import('fs');
+    expect(fs.mkdirSync).toHaveBeenCalledWith(expect.any(String), { recursive: true });
   });
 
-  it('configures storage and file filter', () => {
+  it('configures storage and file filter', async () => {
     let capturedFileFilter: any;
 
-    jest.isolateModules(() => {
-      jest.doMock('fs', () => ({
-        existsSync: jest.fn(() => false),
-        mkdirSync: jest.fn(),
-        unlink: jest.fn((_path: string, cb: (err: NodeJS.ErrnoException | null) => void) => cb(null))
-      }));
+    jest.resetModules();
+    jest.doMock('fs', () => ({
+      existsSync: jest.fn(() => false),
+      mkdirSync: jest.fn(),
+      unlink: jest.fn((_path: string, cb: (err: NodeJS.ErrnoException | null) => void) => cb(null))
+    }));
 
-      jest.doMock('multer', () => {
-        const diskStorage = jest.fn((options: any) => {
-          options.destination({}, { originalname: 'photo.png', fieldname: 'images' }, jest.fn());
-          options.filename({}, { originalname: 'photo.png', fieldname: 'images' }, jest.fn());
-          return {};
-        });
-
-        const multerFn: any = (options: any) => {
-          capturedFileFilter = options.fileFilter;
-          return { options };
-        };
-        multerFn.diskStorage = diskStorage;
-        multerFn.MulterError = class MulterError extends Error {
-          code?: string;
-          constructor(code: string) {
-            super(code);
-            this.code = code;
-          }
-        };
-
-        return multerFn;
+    jest.doMock('multer', () => {
+      const diskStorage = jest.fn((options: any) => {
+        options.destination({}, { originalname: 'photo.png', fieldname: 'images' }, jest.fn());
+        options.filename({}, { originalname: 'photo.png', fieldname: 'images' }, jest.fn());
+        return {};
       });
 
-      require('../middleware/upload');
+      const multerFn: any = (options: any) => {
+        capturedFileFilter = options.fileFilter;
+        return { options };
+      };
+      multerFn.diskStorage = diskStorage;
+      multerFn.MulterError = class MulterError extends Error {
+        code?: string;
+        constructor(code: string) {
+          super(code);
+          this.code = code;
+        }
+      };
+
+      return multerFn;
     });
+
+    await import('../middleware/upload');
 
     const cb = jest.fn();
     capturedFileFilter?.({}, { originalname: 'photo.png', mimetype: 'image/png' }, cb);

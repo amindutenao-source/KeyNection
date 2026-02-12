@@ -108,13 +108,10 @@ describe('AuthService', () => {
     emailMock.sendEmail.mockResolvedValue(undefined);
   });
 
-  it('throws when JWT_SECRET is missing', () => {
+  it('throws when JWT_SECRET is missing', async () => {
     delete process.env.JWT_SECRET;
-    expect(() => {
-      jest.isolateModules(() => {
-        require('../services/authService');
-      });
-    }).toThrow('JWT_SECRET is not configured');
+    jest.resetModules();
+    await expect(import('../services/authService')).rejects.toThrow('JWT_SECRET is not configured');
   });
 
   it('registers a new user and returns tokens', async () => {

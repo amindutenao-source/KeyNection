@@ -9,14 +9,13 @@ describe('logger', () => {
     );
   });
 
-  it('builds production logger format', () => {
+  it('builds production logger format', async () => {
+    const previousEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';
     jest.resetModules();
-    jest.isolateModules(() => {
-      const prodLogger = require('../utils/logger').default;
-      expect(prodLogger).toBeDefined();
-    });
-    process.env.NODE_ENV = 'test';
+    const { default: prodLogger } = await import('../utils/logger');
+    expect(prodLogger).toBeDefined();
+    process.env.NODE_ENV = previousEnv;
   });
 
   it('logs with metadata in non-production', () => {
